@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mx-auto p-4 max-w-2xl">
+    <h1 class="text-3xl font-bold mb-6 text-center text-gray-800">{{ title }}</h1>
+
+    <div class="bg-white p-8 rounded-xl shadow-2xl border border-gray-100">
+        <h2 class="text-xl font-semibold mb-4 text-purple-600">통계 데이터 갱신</h2>
+        <p class="text-gray-700 mb-6">
+            이 기능을 사용하여 데이터베이스에 저장된 최신 로또 당첨 번호를 기반으로 번호별 출현 횟수 및 미출현 간격 통계 데이터를 재계산하고 업데이트합니다.
+            이 작업은 상당한 시간이 소요될 수 있으며, 반드시 필요한 경우에만 실행해야 합니다.
+        </p>
+
+        <!-- 통계 갱신 버튼: POST 요청을 /admin/update_stats 라우트로 보냅니다. -->
+        <form action="{{ url_for('update_statistics_route') }}" method="POST" onsubmit="return confirm('정말로 통계 데이터를 갱신하시겠습니까? 이 작업은 되돌릴 수 없습니다.')">
+            <button type="submit" 
+                    class="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-3 px-4 rounded-lg shadow-lg transition duration-300 transform hover:scale-105 focus:outline-none focus:ring-4 focus:ring-red-300">
+                ⚠️ 통계 데이터 갱신 실행 (관리자 전용)
+            </button>
+        </form>
+    </div>
+
+    <div class="mt-8 bg-gray-50 p-6 rounded-xl shadow-inner border border-gray-200">
+        <h2 class="text-xl font-semibold mb-4 text-blue-600">통계 조회</h2>
+        <p class="text-gray-700 mb-6">
+            현재 계산된 통계 데이터를 확인합니다.
+        </p>
+        <a href="{{ url_for('statistics_page') }}" 
+           class="inline-block w-full text-center bg-blue-500 hover:bg-blue-600 text-white font-bold py-3 px-4 rounded-lg shadow transition duration-300 transform hover:scale-[1.02] focus:outline-none focus:ring-4 focus:ring-blue-300">
+            📊 통계 데이터 조회 페이지로 이동
+        </a>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ title }}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <style>
+        .lotto-ball-container {
+            display: flex;
+            gap: 5px;
+            justify-content: center;
+            align-items: center;
+        }
+        .lotto-ball {
+            width: 30px;
+            height: 30px;
+            line-height: 30px;
+            border-radius: 50%;
+            text-align: center;
+            font-weight: bold;
+            color: white;
+            display: inline-block;
+            box-shadow: 1px 1px 3px rgba(0,0,0,0.3);
+            font-size: 14px;
+        }
+        .no-wrap-cell {
+            white-space: nowrap;
+        }
+        .table-container {
+            overflow-x: auto;
+        }
+        .ball-1 { background-color: #fbc400; } /* 1-10번, 노란색 */
+        .ball-2 { background-color: #69c8f2; } /* 11-20번, 파란색 */
+        .ball-3 { background-color: #ff7272; } /* 21-30번, 빨간색 */
+        .ball-4 { background-color: #aaa; } /* 31-40번, 회색 */
+        .ball-5 { background-color: #b0d840; } /* 41-45번, 초록색 */
+    </style>
+</head>
+<body>
+    {% extends "base.html" %}
+
+{% block content %}
+<h2 style="text-align: center;">나의 선택 번호 관리 (My Picks)</h2>
+
+{% if picks %}
+    <div class="table-container">
+        <table style="width: 100%;"> 
+            <thead>
+                <tr style="background-color: #f2f2f2;">
+                    <th>No.</th> 
+                    <th>선택 번호 (6개)</th>
+                    <th>저장일</th>
+                    <th>관리</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for pick in picks %}
+                <tr>
+                    <td style="text-align: center; font-weight: bold;">{{ loop.index }}</td>
+                    
+                    <td class="no-wrap-cell" style="text-align: center;"> 
+                        <div class="lotto-ball-container">
+                            {% for num in pick.numbers %}
+                                <span class="lotto-ball {{ getBallColorClass(num) }}">{{ num }}</span>
+                            {% endfor %}
+                        </div>
+                    </td>
+                    
+                    <td style="text-align: center;">{{ pick.pick_date.strftime('%Y-%m-%d %H:%M') }}</td>
+                    
+                    <td style="text-align: center;">
+                        <form action="{{ url_for('delete_pick', id=pick.pick_id) }}" method="POST" style="display: inline-block;">
+                            <button type="submit" onclick="return confirm('정말 삭제하시겠습니까?')" style="background-color: #dc3545; color: white; border: none; padding: 5px 10px; border-radius: 5px; cursor: pointer;">
+                                삭제
+                            </button>
+                        </form>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+{% else %}
+    <p style="text-align: center; margin-top: 50px; font-size: 1.1em; color: #555;">
+        아직 저장된 로또 번호가 없습니다. <a href="{{ url_for('recommend_page') }}" style="color: #007bff; text-decoration: underline;">번호 추천 페이지</a>에서 새로운 번호를 생성해 보세요!
+    </p>
+{% endif %}
+
+<script>
+    /**
+     * 로또 번호에 따라 색상 클래스를 반환
+     * 1-10: ball-1 (노랑), 11-20: ball-2 (파랑), 21-30: ball-3 (빨강), 31-40: ball-4 (회색), 41-45: ball-5 (초록)
+     */
+    function getBallColorClass(number) {
+        if (number >= 1 && number <= 10) return 'ball-1';
+        if (number >= 11 && number <= 20) return 'ball-2';
+        if (number >= 21 && number <= 30) return 'ball-3';
+        if (number >= 31 && number <= 40) return 'ball-4';
+        if (number >= 41 && number <= 45) return 'ball-5';
+        return '';
+    }
+</script>
+{% endblock %}
+</body>
+</html>

@@ -1,0 +1,127 @@
+{% extends "base.html" %}
+
+{% block content %}
+{% set sort_by = request.args.get('sort', 'frequency') %}
+{% set sort_order = request.args.get('order', 'desc') %}
+
+<div class="container mx-auto p-4 max-w-6xl">
+    <h1 class="text-3xl font-bold mb-6 text-center text-gray-800">{{ title }}</h1>
+
+    <div class="mb-4 text-sm text-gray-600">
+        <p>⚠️ 현재 통계는 가장 최근 회차까지의 모든 로또 당첨 데이터를 기반으로 계산되었습니다.</p>
+        <p>현재 정렬 기준: 
+            <span class="font-semibold text-blue-600">
+                {% if sort_by == 'number' %}번호{% elif sort_by == 'frequency' %}출현 횟수{% elif sort_by == 'last_draw_gap' %}최근 미출현 간격{% endif %} 
+                ({{ '내림차순' if sort_order == 'desc' else '오름차순' }})
+            </span>
+        </p>
+    </div>
+
+    <div class="overflow-x-auto bg-white shadow-lg rounded-lg">
+        <table class="min-w-full divide-y divide-gray-200">
+            <thead class="bg-gray-50">
+                <tr>
+                    <!-- 순위는 정렬 후 index로 매겨지므로, 정렬 링크 없음 -->
+                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        순위
+                    </th>
+                    
+                    <!-- 번호 정렬 링크: 현재 정렬 기준이 아니라도 화살표를 표시 -->
+                    {% set next_order_number = 'asc' if sort_by == 'number' and sort_order == 'desc' else 'desc' %}
+                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer">
+                        <a href="{{ url_for('statistics_page', sort='number', order=next_order_number) }}" class="flex items-center hover:text-gray-900">
+                            번호 
+                            <!-- 현재 정렬 중인 경우에만 방향 표시 (▲/▼) -->
+                            <span class="ml-1 text-xs text-gray-400">
+                                {% if sort_by == 'number' %}
+                                    {{ '▼' if sort_order == 'desc' else '▲' }}
+                                {% else %}
+                                    <!-- 현재 정렬되지 않은 경우: 정렬 가능 아이콘 (화살표 2개) 표시 -->
+                                    <span class="text-xs">⇵</span>
+                                {% endif %}
+                            </span>
+                        </a>
+                    </th>
+                    
+                    <!-- 출현 횟수 정렬 링크 (기본값) -->
+                    {% set next_order_frequency = 'asc' if sort_by == 'frequency' and sort_order == 'desc' else 'desc' %}
+                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer">
+                        <a href="{{ url_for('statistics_page', sort='frequency', order=next_order_frequency) }}" class="flex items-center hover:text-gray-900">
+                            출현 횟수 (Frequency) 
+                            <span class="ml-1 text-xs text-gray-400">
+                                {% if sort_by == 'frequency' %}
+                                    {{ '▼' if sort_order == 'desc' else '▲' }}
+                                {% else %}
+                                    <span class="text-xs">⇵</span>
+                                {% endif %}
+                            </span>
+                        </a>
+                    </th>
+                    
+                    <!-- 최근 미출현 간격 정렬 링크 -->
+                    {% set next_order_gap = 'asc' if sort_by == 'last_draw_gap' and sort_order == 'desc' else 'desc' %}
+                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer">
+                        <a href="{{ url_for('statistics_page', sort='last_draw_gap', order=next_order_gap) }}" class="flex items-center hover:text-gray-900">
+                            최근 미출현 간격 (Draw Gap)
+                            <span class="ml-1 text-xs text-gray-400">
+                                {% if sort_by == 'last_draw_gap' %}
+                                    {{ '▼' if sort_order == 'desc' else '▲' }}
+                                {% else %}
+                                    <span class="text-xs">⇵</span>
+                                {% endif %}
+                            </span>
+                        </a>
+                    </th>
+
+                    <!-- 시각화를 위한 칼럼 추가 -->
+                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        출현 빈도
+                    </th>
+                </tr>
+            </thead>
+            <tbody class="bg-white divide-y divide-gray-200">
+                {% set max_frequency = stats | map(attribute='frequency') | max %}
+
+                {% for stat in stats %}
+                <tr class="hover:bg-gray-50">
+                    <!-- 1. 순위: 1부터 시작하는 loop.index 사용 -->
+                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                        {{ loop.index }}
+                    </td>
+                    <!-- 2. 번호 -->
+                    <td class="px-6 py-4 whitespace-nowrap text-sm font-bold text-blue-600">
+                        {{ stat.number }}
+                    </td>
+                    <!-- 3. 출현 횟수 -->
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
+                        {{ stat.frequency }}
+                    </td>
+                    <!-- 4. 최근 미출현 간격 -->
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
+                        {{ stat.last_draw_gap if stat.last_draw_gap is not none else 'N/A' }}
+                    </td>
+                    <!-- 5. 시각화 (막대 그래프) -->
+                    <td class="px-6 py-4">
+                        {% set width_percent = (stat.frequency * 100) / max_frequency %}
+                        <div class="h-2 bg-gray-200 rounded-full w-full">
+                            <div class="h-2 bg-purple-500 rounded-full" style="width: {{ width_percent }}%;"></div>
+                        </div>
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="5" class="px-6 py-4 whitespace-nowrap text-center text-sm text-gray-500">
+                        ⚠️ 통계 데이터가 없습니다. 관리자 페이지에서 갱신해 주세요.
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_head %}
+<!-- Tailwind CSS 링크 (base.html에 없을 경우) -->
+<script src="https://cdn.tailwindcss.com"></script>
+{% endblock %}

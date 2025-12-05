@@ -1,0 +1,138 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="bg-white p-8 rounded-xl shadow-2xl text-center">
+    
+    <h2 class="text-3xl font-bold text-gray-800 mb-6">통계 기반 로또 번호 추천</h2>
+
+    {% if session.username %}
+        <p class="text-lg text-gray-600 mb-6">{{ session.username }}님, 통계 분석 결과를 바탕으로 다음 회차 추천 번호를 생성합니다.</p>
+    {% else %}
+        <p class="text-lg text-red-500 mb-6">로그인 사용자에게만 번호 추천 기능을 제공합니다. <a href="{{ url_for('login') }}" class="text-purple-600 hover:text-purple-800 font-semibold underline">로그인하기</a></p>
+        {% set is_success = False %}
+    {% endif %}
+
+    {% if is_success %}
+        <!-- 최종 추천 번호 카드 -->
+        <div class="border-2 border-purple-400 p-6 mb-8 bg-purple-50 rounded-xl shadow-inner">
+            <h3 class="text-2xl font-extrabold text-purple-700 mb-4">⭐ 최종 추천 번호 ⭐</h3>
+            {% if recommended_numbers %}
+                <div class="flex justify-center flex-wrap gap-4">
+                    {% for num in recommended_numbers %}
+                        <span class="flex items-center justify-center w-12 h-12 rounded-full bg-purple-600 text-white text-xl font-bold shadow-lg transform transition duration-150 hover:scale-110">
+                            {{ num }}
+                        </span>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        </div>
+
+        <!-- 상세 분석 테이블 -->
+        <h3 class="text-2xl font-bold text-gray-800 mb-4 border-b pb-2">추천 번호 상세 분석 (VIEW 활용)</h3>
+        <p class="text-sm text-gray-500 mb-6">추천 점수(Total Score)는 빈도 순위(Hot)와 미출현 간격 순위(Cold)를 합산한 값입니다. 점수가 낮을수록 추천 우선순위가 높습니다.</p>
+        
+        <div class="overflow-x-auto">
+            <table class="min-w-full table-auto border-collapse shadow-md rounded-lg overflow-hidden">
+                <thead>
+                    <tr class="bg-gray-200 text-gray-700 uppercase text-sm leading-normal">
+                        <th class="py-3 px-6 text-center">번호 (Number)</th>
+                        <th class="py-3 px-6 text-center">총 추천 점수 (Total Score)</th>
+                        <th class="py-3 px-6 text-center">빈도 (Frequency)</th>
+                        <th class="py-3 px-6 text-center">미출현 간격 (Last Draw Gap)</th>
+                    </tr>
+                </thead>
+                <tbody class="text-gray-700 text-sm font-light">
+                    {% for number, total_score, frequency, last_draw_gap in detailed_stats %}
+                    <tr class="border-b border-gray-200 hover:bg-gray-50">
+                        <td class="py-3 px-6 text-center font-bold text-purple-600">{{ number }}</td>
+                        <td class="py-3 px-6 text-center font-bold text-green-600">{{ total_score | round(2) }}</td>
+                        <td class="py-3 px-6 text-center">{{ frequency }}</td>
+                        <td class="py-3 px-6 text-center">{{ last_draw_gap }}회차</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        
+        {% if session.username and recommended_numbers %}
+            <form action="{{ url_for('save_recommended_pick') }}" method="POST">
+                {% for num in recommended_numbers %}
+                    <input type="hidden" name="number_{{ loop.index }}" value="{{ num }}">
+                {% endfor %}
+                
+                <button type="submit"
+                        class="mt-6 px-8 py-3 bg-blue-500 text-white font-bold rounded-lg shadow-lg hover:bg-blue-600 transition duration-150 transform hover:scale-105">
+                    이 번호 나의 목록에 저장하기
+                </button>
+            </form>
+        {% endif %}
+
+    {% elif is_success == False and numbers %}
+        <p class="text-xl text-red-600 font-semibold mt-6">{{ numbers }}</p>
+    {% endif %}
+
+    {% if recommended_numbers %}
+<div class="mt-10 p-6 bg-gray-50 border border-gray-200 rounded-xl shadow-sm">
+    <h3 class="text-2xl font-bold text-gray-800 mb-4 border-b border-gray-300 pb-2 flex items-center gap-2">
+        📊 추천 모델의 통계적 근거
+    </h3>
+
+    <p class="text-gray-700 mb-4">
+        본 추천 번호는 단순 무작위가 아닌, <span class="font-semibold">역대 로또 당첨 데이터 통계 분석</span>을 기반으로 생성되었습니다.
+        특히, <span class="font-semibold">다기준 의사결정 분석(MCDA)</span>의 가중 순위 기법을 응용한 <span class="font-semibold">통계적 랭킹 모델</span>을 사용합니다.
+    </p>
+
+    <ul class="list-disc list-inside space-y-2 text-gray-700 pl-4">
+        <li>
+            <span class="font-semibold">빈도 및 간격 분석:</span>
+            각 번호의 출현 횟수(Frequency)와 미출현 간격(Draw Gap)을 계산하여 점수를 부여합니다.
+        </li>
+        <li>
+            <span class="font-semibold">개인화 필터링:</span>
+            사용자가 이전에 선택했던 비당첨 번호를 제외하는 행동 경제학적 편향을 적용하여 맞춤 추천을 제공합니다.
+        </li>
+    </ul>
+
+    <div class="mt-6 pt-4 border-t border-gray-200">
+    <h4 class="text-lg font-semibold text-gray-800 mb-2 flex items-center gap-2">
+        📚 참고 자료
+    </h4>
+    <ul class="list-disc list-inside text-sm text-gray-600 space-y-1">
+        <li>
+            <span class="font-medium">[확률 모델]</span> 
+            <a href="https://arxiv.org/html/2403.12836v1" target="_blank" class="text-blue-600 hover:underline">
+                Compound-Dirichlet-Multinomial, Predicting Winning Lottery Numbers (Nkomozake, arXiv, 2024)
+            </a>
+        </li>
+        <li>
+            <span class="font-medium">[행동 경제학]</span> 
+            <a href="https://papers.ssrn.com/sol3/papers.cfm?abstract_id=1794126" target="_blank" class="text-blue-600 hover:underline">
+                플레이어 선택 편향 분석, Predicting Lotto Numbers (Tyran et al., 2011)
+            </a>
+        </li>
+        <li>
+            <span class="font-medium">[데이터마이닝]</span> 
+            <a href="https://www.sciencedirect.com/science/article/abs/pii/S0957417423025654" target="_blank" class="text-blue-600 hover:underline">
+                유리한 잭팟 조건 탐지, Mining a lottery for a favorable jackpot (2024)
+            </a>
+        </li>
+        <li>
+            <span class="font-medium">[물리/통계 모델]</span> 
+            <a href="https://www.researchgate.net/publication/378304416_Jackpot_statistics_a_physicist%27s_approach" target="_blank" class="text-blue-600 hover:underline">
+                잭팟 시계열 분석, Jackpot statistics, a physicist's approach (2024)
+            </a>
+        </li>
+        <li>
+            <span class="font-medium">[실무/커뮤니티 구현]</span> 
+            <a href="https://github.com/Ahmad-Alam/Lottery-Prediction" target="_blank" class="text-blue-600 hover:underline">
+                ML 기반 로또 예측 예제, GitHub / 블로그 등
+            </a>
+        </li>
+    </ul>
+</div>
+</div>
+{% endif %}
+
+
+</div>
+{% endblock %}

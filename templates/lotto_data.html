@@ -1,0 +1,77 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h2 class="text-3xl font-bold text-center mb-6 text-gray-800">역대 로또 당첨 번호 목록</h2>
+
+{% if data and data.draws %}
+<div class="text-center mb-4 text-gray-600">
+    <p>총 {{ data.total_count }} 회차 | 현재 <span class="font-bold text-purple-600">{{ data.current_page }}</span> / {{ data.total_pages }} 페이지</p>
+</div>
+
+<div class="bg-white shadow-xl rounded-xl overflow-x-auto">
+    <table class="w-full table-auto border-collapse">
+        <thead>
+            <tr class="bg-purple-100 text-purple-800 uppercase text-sm leading-normal">
+                <th class="py-3 px-6 text-center">회차 (draw_no)</th>
+                <th class="py-3 px-6 text-center">추첨일 (draw_date)</th>
+                <th colspan="6" class="py-3 px-6 text-center">당첨 번호 (n1~n6)</th>
+                <th class="py-3 px-6 text-center">보너스 (bonus)</th>
+            </tr>
+        </thead>
+        <tbody class="text-gray-700 text-sm font-light">
+            {% for draw_no, draw_date, n1, n2, n3, n4, n5, n6, bonus in data.draws %}
+            <tr class="border-b border-gray-200 hover:bg-gray-50">
+                <td class="py-3 px-6 text-center whitespace-nowrap font-medium">{{ draw_no }}</td>
+                <td class="py-3 px-6 text-center">{{ draw_date.strftime('%Y-%m-%d') if draw_date else '' }}</td>
+                <!-- 당첨번호들을 작은 볼 형태로 표시 -->
+                {% for num in [n1, n2, n3, n4, n5, n6] %}
+                    <td class="py-3 px-2 text-center">
+                        <span class="inline-flex items-center justify-center w-8 h-8 rounded-full bg-blue-500 text-white text-sm font-bold shadow-md">{{ num }}</span>
+                    </td>
+                {% endfor %}
+                <td class="py-3 px-6 text-center">
+                    <span class="inline-flex items-center justify-center w-8 h-8 rounded-full bg-red-500 text-white text-sm font-bold shadow-md">{{ bonus }}</span>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<div class="flex justify-center space-x-2 mt-6 pagination">
+    {% set block_size = 5 %}
+    {% set current_block = ((data.current_page - 1) // block_size) + 1 %}
+    {% set start_page = (current_block - 1) * block_size + 1 %}
+    {% set end_page = current_block * block_size %}
+
+    {% if data.current_page > block_size %}
+    <a href="{{ url_for('lotto_data', page=1) }}" class="px-4 py-2 bg-gray-300 text-gray-800 rounded-lg hover:bg-gray-400 transition duration-150 shadow-sm">처음</a>
+    {% endif %}
+
+    {% if start_page > 1 %}
+    <a href="{{ url_for('lotto_data', page=start_page - 1) }}" class="px-4 py-2 bg-gray-300 text-gray-800 rounded-lg hover:bg-gray-400 transition duration-150 shadow-sm">이전</a>
+    {% endif %}
+
+    {% for p in range(start_page, end_page + 1) %}
+        {% if p <= data.total_pages %}
+        <a href="{{ url_for('lotto_data', page=p) }}" class="px-4 py-2 rounded-lg transition duration-150 shadow-sm
+            {% if p == data.current_page %} bg-purple-600 text-white font-bold hover:bg-purple-700 {% else %} bg-white text-gray-700 border border-gray-300 hover:bg-gray-100 {% endif %}">
+            {{ p }}
+        </a>
+        {% endif %}
+    {% endfor %}
+    
+    {% set next_block_start = end_page + 1 %}
+    {% if next_block_start <= data.total_pages %}
+    <a href="{{ url_for('lotto_data', page=next_block_start) }}" class="px-4 py-2 bg-gray-300 text-gray-800 rounded-lg hover:bg-gray-400 transition duration-150 shadow-sm">다음</a>
+    {% endif %}
+
+    {% if end_page < data.total_pages %}
+    <a href="{{ url_for('lotto_data', page=data.total_pages) }}" class="px-4 py-2 bg-gray-300 text-gray-800 rounded-lg hover:bg-gray-400 transition duration-150 shadow-sm">끝</a>
+    {% endif %}
+</div>
+{% else %}
+<p class="text-center text-gray-500 mt-10">조회된 로또 당첨 데이터가 없습니다. DB 연결 상태나 테이블 데이터를 확인해주세요.</p>
+{% endif %}
+
+{% endblock %}
