@@ -1,33 +1,38 @@
-Lotto Analysis and Personalized Recommendation System
+# Lotto Analysis and Personalized Recommendation System
 
-This project provides a full-stack system for analyzing lotto data and generating personalized number recommendations using statistical models.
+This project provides a full-stack system for analyzing lotto data and generating personalized number recommendations based on statistical models.
 
-1. Prerequisites
 
-Before running the system, ensure the following are installed:
+## 1. Prerequisites
 
-Python 3.8+
+Before running the system, ensure the following software is installed:
 
-PostgreSQL (running)
+- Python 3.8+
+- PostgreSQL Database Server (running)
+- Project CSV files:
+  - `1600.csv`
+  - `6011200.csv`
 
-Project CSV files
 
-1600.csv
+## 2. Environment Setup & Dependency Installation
 
-6011200.csv
+### 2.1 Create Python Virtual Environment
 
-2. Environment Setup and Dependency Installation
-2.1 Create Python Virtual Environment
+```bash
 python3 -m venv venv
 source venv/bin/activate      # macOS/Linux
-# venv\Scripts\activate       # Windows CMD
-# .\venv\Scripts\Activate     # Windows PowerShell
+# venv\Scripts\activate       # Windows (CMD)
+# .\venv\Scripts\Activate     # Windows (PowerShell)
+```
 
-2.2 Install Required Libraries
+### 2.2 Install Required Libraries
+```
 pip install -r requirements.txt
+```
 
-2.3 Create .env File
+### 2.3 Create .env File
 
+```
 Create a .env file in the project root:
 
 SECRET_KEY="your_secret_key_here_must_be_long"
@@ -37,21 +42,18 @@ DB_PORT="5432"
 DB_NAME="lotto_project"
 DB_USER="postgres"
 DB_PASSWORD="your_db_password"
+```
 
-3. Database Initialization
-3.1 Create PostgreSQL Database
+## 3. Database Initialization
+### 3.1 Create PostgreSQL Database
 
-Create a new database named:
+Create a new database named : `lotto_project`(or the name set in `.env`)
 
-lotto_project
-
-
-(or the name set in .env)
-
-3.2 Create Required Tables
+### 3.2 Create Required Tables
 
 Execute the following SQL:
 
+```
 CREATE TABLE user_account (
     user_id SERIAL PRIMARY KEY,
     username VARCHAR(50) UNIQUE NOT NULL,
@@ -131,33 +133,44 @@ CREATE TABLE lotto_stat (
     frequency INT DEFAULT 0,
     last_draw_gap INT DEFAULT NULL
 );
+```
 
-3.3 Load Initial Draw Data
+### 3.3 Load Initial Draw Data
+```
 python scripts/load_lotto_data.py
+```
 
-3.4 Update Statistics and Recommendation View
-Update Statistics
+### 3.4 Update Statistics and Recommendation View
+- Update Statistics
+```
 from services.stat_service import StatService
 StatService.update_statistics()
+```
 
-Create Recommendation View
-
+- Create Recommendation View
 Executed automatically during statistics update:
-
+```
 from services.recommend_service import RecommendService
 RecommendService.create_recommend_view_only()
+```
 
-4. Running the Web Application
-Set Flask App
+## 4. Running the Web Application
+- Set Flask App
+```
 export FLASK_APP=app.py
+```
 
-(Optional) Enable Development Mode
+- (Optional) Enable Development Mode
+```
 export FLASK_ENV=development
+```
 
-Run Server
+- Run Server
+```
 flask run
+```
 
-
-Open in browser:
-
+- Open in browser:
+```
 http://127.0.0.1:5000
+```
