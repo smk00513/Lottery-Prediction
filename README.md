@@ -19,7 +19,7 @@ Before running the system, ensure the following software is installed:
 ### 2.1 Create Python Virtual Environment
 
 ```bash
-python3 -m venv venv
+python -m venv venv
 source venv/bin/activate      # macOS/Linux
 # venv\Scripts\activate       # Windows (CMD)
 # .\venv\Scripts\Activate     # Windows (PowerShell)
